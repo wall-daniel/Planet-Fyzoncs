@@ -46,7 +46,7 @@ public class Fyzoncs extends ApplicationAdapter {
 	public void update(float dt) {
 		// Calculate the force of all the planets in middle of screen
 		for (Planet p : planets) {
-			f.addForce(p.getGravity(x, y, 50));
+			f.addForce(p.getGravity(x, y));
 		}
 		// System.out.println(f.toString());
 
