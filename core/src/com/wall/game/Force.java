@@ -1,5 +1,7 @@
 package com.wall.game;
 
+import com.badlogic.gdx.math.Vector2;
+
 public class Force {
 
 	public float x, y;
@@ -28,5 +30,9 @@ public class Force {
 	
 	public String toString() {
 		return x + " - " + y + ", " + direction + "°";
+	}
+
+	public Vector2 getVector() {
+		return new Vector2(x, y);
 	}
 }

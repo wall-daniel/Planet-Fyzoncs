@@ -1,5 +1,7 @@
 package com.wall.game;
 
+import com.badlogic.gdx.math.Vector2;
+
 public abstract class Body {
 
 	// Whether or not this body is affected by forces
@@ -46,5 +48,9 @@ public abstract class Body {
 		}
 		
 		return new Force();
+	}
+	
+	public Force getGravity(Vector2 v) {
+		return getGravity(v.x, v.y);
 	}
 }
