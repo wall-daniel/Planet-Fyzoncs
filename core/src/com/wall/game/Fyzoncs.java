@@ -8,22 +8,20 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.wall.game.screens.PlayScreen;
 
 public class Fyzoncs extends Game {
-	public static final int WIDTH = 600;
-	public static final int HEIGHT = 600;
+	public static final int WIDTH = 640;
+	public static final int HEIGHT = 480;
 	public static final float MOVE_SPEED = 128f;
-	
-	private SpriteBatch sb;
-	private ShapeRenderer sr;
-	
+
+	SpriteBatch sb;
+	ShapeRenderer sr;
+
 	@Override
 	public void create() {
 		sb = new SpriteBatch();
 		sr = new ShapeRenderer();
-		
 		this.setScreen(new PlayScreen(sb, sr));
 	}
-	
-	@Override
+
 	public void render() {
 		// Clear the screen
 		Gdx.gl.glClearColor(0, 0, 0.2f, 1);
