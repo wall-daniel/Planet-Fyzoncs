@@ -10,7 +10,9 @@ import com.wall.game.screens.PlayScreen;
 public class Fyzoncs extends Game {
 	public static final int WIDTH = 640;
 	public static final int HEIGHT = 480;
-	public static final float MOVE_SPEED = 128f;
+	public static final int WORLD_WIDTH = 1000;
+	public static final int WORLD_HEIGHT = 1000;
+	public static final float MOVE_SPEED = 4096;
 
 	SpriteBatch sb;
 	ShapeRenderer sr;

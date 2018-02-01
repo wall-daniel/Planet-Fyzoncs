@@ -9,6 +9,8 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
+import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Polygon;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
@@ -18,6 +20,8 @@ import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.CircleShape;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
+import com.badlogic.gdx.physics.box2d.MassData;
+import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
 import com.wall.game.Fyzoncs;
 import com.wall.game.Planet;
@@ -31,9 +35,10 @@ public class PlayScreen implements Screen {
 	private Box2DDebugRenderer debugRenderer;
 
 	private OrthographicCamera camera;
-	
+
 	private ArrayList<Planet> planets;
-	private Rectangle rectangle;
+	private Body rectBody;
+	private Polygon rectangle;
 
 	public PlayScreen(SpriteBatch sb, ShapeRenderer sr) {
 		this.sb = sb;
@@ -43,19 +48,19 @@ public class PlayScreen implements Screen {
 		debugRenderer = new Box2DDebugRenderer();
 
 		camera = new OrthographicCamera(Fyzoncs.WIDTH, Fyzoncs.HEIGHT);
-		camera.update();
-		
+		camera.position.set(Fyzoncs.WIDTH / 2f, Fyzoncs.HEIGHT / 2f, 0);
+
 		// Create the planets
 		planets = new ArrayList<Planet>();
-		for(int i = 0; i < 5;i++) {
-			int r = (int) (Math.random() * 32 + 32);
-			float x = (float) (Math.random() * (Fyzoncs.WIDTH - r) + r);
-			float y = (float) (Math.random() * (Fyzoncs.HEIGHT - r) + r);
-			
+		for (int i = 0; i < 8; i++) {
+			int r = (int) (Math.random() * 72 + 48);
+			float x = (float) (Math.random() * (Fyzoncs.WORLD_WIDTH) + r);
+			float y = (float) (Math.random() * (Fyzoncs.WORLD_HEIGHT) + r);
+
 			// Make sure planets don't intersect
-			if(!Planet.isIntersecting(x, y, r, planets)) {
+			if (!Planet.isIntersecting(x, y, r, planets)) {
 				planets.add(new Planet(x, y, r));
-				
+
 				BodyDef bodyDef = new BodyDef();
 				bodyDef.position.set(x, y);
 				bodyDef.type = BodyType.StaticBody;
@@ -70,21 +75,45 @@ public class PlayScreen implements Screen {
 				planetShape.dispose();
 			}
 		}
+
+		BodyDef bodyDef = new BodyDef();
+		bodyDef.position.set(camera.position.x, camera.position.y);
+		bodyDef.type = BodyType.DynamicBody;
+		rectBody = world.createBody(bodyDef);
+		PolygonShape rectShape = new PolygonShape();
+		rectShape.set(new float[] { -16, -16, 16, -16, 16, 16, -16, 16 });
+		FixtureDef fixtureDef = new FixtureDef();
+		fixtureDef.shape = rectShape;
+		fixtureDef.friction = 0.2f;
+		fixtureDef.restitution = 0.4f;
+		Fixture fixture = rectBody.createFixture(fixtureDef);
+		rectShape.dispose();
+
+		rectangle = new Polygon(new float[] { -16, -16, 16, -16, 16, 16, -16, 16 });
+		rectangle.setPosition(bodyDef.position.x, bodyDef.position.y);
 	}
 
 	public void handleInput(float delta) {
 		// Move the camera on a plain
-		if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
-			camera.translate(delta * -Fyzoncs.MOVE_SPEED, 0);
+		if (camera.position.x > 0 && Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
+			rectBody.applyForceToCenter((float) (Math.sin(rectBody.getAngle()) * delta * Fyzoncs.MOVE_SPEED * 250), 
+					(float) (Math.cos(rectBody.getAngle()) * delta * -Fyzoncs.MOVE_SPEED * 250), true);
 		}
 		if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
-			camera.translate(delta * Fyzoncs.MOVE_SPEED, 0);
+			rectBody.applyForceToCenter((float) (Math.sin(rectBody.getAngle()) * delta * -Fyzoncs.MOVE_SPEED * 250), 
+					(float) (Math.cos(rectBody.getAngle()) * delta * Fyzoncs.MOVE_SPEED * 250), true);
 		}
-		if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
-			camera.translate(0, delta * Fyzoncs.MOVE_SPEED);
-		}
-		if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
-			camera.translate(0, delta * -Fyzoncs.MOVE_SPEED);
+		// Up and down aren't needed because 2d game
+		// if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
+		// rectBody.applyForceToCenter(0, delta * Fyzoncs.MOVE_SPEED * 250, true);
+		// }
+		// if (camera.position.y > 0 && Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
+		// rectBody.applyForceToCenter(0, delta * -Fyzoncs.MOVE_SPEED * 250, true);
+		// }
+		if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+			rectBody.applyLinearImpulse((float) Math.sin(rectBody.getAngle()) * 200000000,
+					(float) Math.cos(rectBody.getAngle()) * 200000000, rectBody.getLocalCenter().x,
+					rectBody.getLocalCenter().y, true);
 		}
 
 		// Rotate the camera
@@ -102,6 +131,28 @@ public class PlayScreen implements Screen {
 		if (Gdx.input.isKeyPressed(Input.Keys.S)) {
 			camera.zoom *= 1.01f;
 		}
+
+		// Check if outside boundary
+		if (camera.position.x < 0)
+			camera.position.x = 0;
+		if (camera.position.y < 0)
+			camera.position.y = 0;
+
+		camera.position.set(rectBody.getPosition(), 0);
+
+		// Calculate the force on rectangle due to gravity
+		Vector2 force = new Vector2();
+		for (Planet p : planets) {
+			force.add(p.getGravity(rectBody.getPosition(), rectBody.getMass() * 100));
+		}
+
+		// Apply the force to the body
+		rectBody.applyForceToCenter(force, true);
+
+		// Set the position of the polygon and angle
+		rectBody.setTransform(rectBody.getPosition(), (float) Math.atan2(force.y, force.x));
+		rectangle.setPosition(rectBody.getPosition().x, rectBody.getPosition().y);
+		rectangle.setRotation((float) Math.toDegrees(rectBody.getAngle()));
 	}
 
 	@Override
@@ -119,11 +170,15 @@ public class PlayScreen implements Screen {
 		sr.setProjectionMatrix(camera.combined);
 		sr.begin(ShapeType.Filled);
 		sr.setColor(1, 1, 1, 1);
-		
-		for(Planet p : planets) {
+
+		for (Planet p : planets) {
 			sr.circle(p.getX(), p.getY(), p.getRadius());
 		}
-		
+
+		sr.end();
+
+		sr.begin(ShapeType.Line);
+		sr.polygon(rectangle.getTransformedVertices());
 		sr.end();
 
 		debugRenderer.render(world, camera.combined);
