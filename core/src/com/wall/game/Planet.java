@@ -5,8 +5,8 @@ import java.util.ArrayList;
 import com.badlogic.gdx.math.Vector2;
 
 public class Planet {
-	public static final int PLANET_DENSITY = 8;
-	private static final float GRAVITY_CONSTANT = 25f;
+	public static final float PLANET_DENSITY = 0.75f;
+	private static final float GRAVITY_CONSTANT = 9.8f;
 
 	private int radius;
 	private Vector2 position;
@@ -28,7 +28,7 @@ public class Planet {
 	}
 	
 	public static float getDistance(float x1, float y1, float x2, float y2) {
-		return (float) (Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
+		return (float) Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
 	}
 	
 	public Vector2 getGravity(Vector2 position, float mass) {
@@ -38,7 +38,7 @@ public class Planet {
 	// Returns whether the two circles intersect
 	public static boolean isIntersecting(float x, float y, float r, ArrayList<Planet> planets) {
 		for (Planet p : planets) {
-			if (getDistance(x, y, p.getX(), p.getY()) <= Math.pow(r + p.getRadius(), 2) + 16)
+			if (getDistance(x, y, p.getX(), p.getY()) <= r + p.getRadius() + 16)
 				return true;
 		}
 

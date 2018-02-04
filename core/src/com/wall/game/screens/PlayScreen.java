@@ -9,9 +9,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Polygon;
-import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
@@ -20,7 +18,6 @@ import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.CircleShape;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
-import com.badlogic.gdx.physics.box2d.MassData;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
 import com.wall.game.Fyzoncs;
@@ -77,18 +74,19 @@ public class PlayScreen implements Screen {
 		}
 
 		// Create jump pads
-//		for(int i = 0; i < planets.size(); i++) {
-//			for(int j = 0; j < planets.size(); j++) {
-//				if(j == i)
-//					continue;
-//				if(Math.random() > )
-//			}
-//		}
-		
+		// for(int i = 0; i < planets.size(); i++) {
+		// for(int j = 0; j < planets.size(); j++) {
+		// if(j == i)
+		// continue;
+		// if(Math.random() > )
+		// }
+		// }
+
 		BodyDef bodyDef = new BodyDef();
 		bodyDef.position.set(camera.position.x, camera.position.y);
 		bodyDef.type = BodyType.DynamicBody;
 		rectBody = world.createBody(bodyDef);
+		rectBody.setFixedRotation(true);
 		PolygonShape rectShape = new PolygonShape();
 		rectShape.set(new float[] { -16, -16, 16, -16, 16, 16, -16, 16 });
 		FixtureDef fixtureDef = new FixtureDef();
@@ -105,12 +103,12 @@ public class PlayScreen implements Screen {
 	public void handleInput(float delta) {
 		// Move the camera on a plain
 		if (camera.position.x > 0 && Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
-			rectBody.applyForceToCenter((float) (Math.sin(rectBody.getAngle()) * delta * Fyzoncs.MOVE_SPEED * 250), 
-					(float) (Math.cos(rectBody.getAngle()) * delta * -Fyzoncs.MOVE_SPEED * 250), true);
+			rectBody.applyForceToCenter((float) (Math.sin(rectBody.getAngle()) * delta * -Fyzoncs.MOVE_SPEED * 250),
+					(float) (Math.cos(rectBody.getAngle()) * delta * Fyzoncs.MOVE_SPEED * 250), true);
 		}
 		if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
-			rectBody.applyForceToCenter((float) (Math.sin(rectBody.getAngle()) * delta * -Fyzoncs.MOVE_SPEED * 250), 
-					(float) (Math.cos(rectBody.getAngle()) * delta * Fyzoncs.MOVE_SPEED * 250), true);
+			rectBody.applyForceToCenter((float) (Math.sin(rectBody.getAngle()) * delta * Fyzoncs.MOVE_SPEED * 250),
+					(float) (Math.cos(rectBody.getAngle()) * delta * -Fyzoncs.MOVE_SPEED * 250), true);
 		}
 		// Up and down aren't needed because 2d game
 		// if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
@@ -120,9 +118,9 @@ public class PlayScreen implements Screen {
 		// rectBody.applyForceToCenter(0, delta * -Fyzoncs.MOVE_SPEED * 250, true);
 		// }
 		if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
-			rectBody.applyLinearImpulse((float) Math.sin(rectBody.getAngle()) * 200000000,
-					(float) Math.cos(rectBody.getAngle()) * 200000000, rectBody.getLocalCenter().x,
-					rectBody.getLocalCenter().y, true);
+			float impulse = 100000000;
+			rectBody.applyLinearImpulse(new Vector2((float) Math.cos(rectBody.getAngle()) * impulse,
+					(float) Math.sin(rectBody.getAngle()) * impulse), rectBody.getWorldCenter(), true);
 		}
 
 		// Rotate the camera
@@ -152,17 +150,18 @@ public class PlayScreen implements Screen {
 		// Calculate the force on rectangle due to gravity
 		int index = 0;
 		float lowestDistance = Float.MAX_VALUE;
-		for(int i = 0; i < planets.size(); i++) {
-			if(Planet.getDistance(rectBody.getPosition(), planets.get(index).getPosition()) < lowestDistance) {
+		for (int i = 0; i < planets.size(); i++) {
+			if (Planet.getDistance(rectBody.getPosition(), planets.get(i).getPosition()) < lowestDistance) {
 				index = i;
 				lowestDistance = Planet.getDistance(rectBody.getPosition(), planets.get(index).getPosition());
 			}
 		}
-		
+
 		// Set the position of the polygon and angle
-		rectBody.applyForceToCenter(planets.get(index).getGravity(rectBody.getPosition(), 1), true);
-		rectBody.setTransform(rectBody.getPosition(), (float) Math.atan2(rectBody.getPosition().y - planets.get(index).getPosition().y, 
-				rectBody.getPosition().x - planets.get(index).getPosition().x));
+		rectBody.applyForceToCenter(planets.get(index).getGravity(rectBody.getPosition(), rectBody.getMass()), true);
+		rectBody.setTransform(rectBody.getPosition(),
+				(float) Math.atan2(rectBody.getPosition().y - planets.get(index).getPosition().y,
+						rectBody.getPosition().x - planets.get(index).getPosition().x));
 		rectangle.setPosition(rectBody.getPosition().x, rectBody.getPosition().y);
 		rectangle.setRotation((float) Math.toDegrees(rectBody.getAngle()));
 	}
