@@ -53,7 +53,7 @@ public class PlayScreen implements Screen {
 		// Create the planets
 		planets = new ArrayList<Planet>();
 		for (int i = 0; i < 8; i++) {
-			int r = (int) (Math.random() * 72 + 48);
+			int r = (int) (Math.random() * 128 + 64);
 			float x = (float) (Math.random() * (Fyzoncs.WORLD_WIDTH) + r);
 			float y = (float) (Math.random() * (Fyzoncs.WORLD_HEIGHT) + r);
 
@@ -76,6 +76,15 @@ public class PlayScreen implements Screen {
 			}
 		}
 
+		// Create jump pads
+//		for(int i = 0; i < planets.size(); i++) {
+//			for(int j = 0; j < planets.size(); j++) {
+//				if(j == i)
+//					continue;
+//				if(Math.random() > )
+//			}
+//		}
+		
 		BodyDef bodyDef = new BodyDef();
 		bodyDef.position.set(camera.position.x, camera.position.y);
 		bodyDef.type = BodyType.DynamicBody;
@@ -141,16 +150,19 @@ public class PlayScreen implements Screen {
 		camera.position.set(rectBody.getPosition(), 0);
 
 		// Calculate the force on rectangle due to gravity
-		Vector2 force = new Vector2();
-		for (Planet p : planets) {
-			force.add(p.getGravity(rectBody.getPosition(), rectBody.getMass() * 100));
+		int index = 0;
+		float lowestDistance = Float.MAX_VALUE;
+		for(int i = 0; i < planets.size(); i++) {
+			if(Planet.getDistance(rectBody.getPosition(), planets.get(index).getPosition()) < lowestDistance) {
+				index = i;
+				lowestDistance = Planet.getDistance(rectBody.getPosition(), planets.get(index).getPosition());
+			}
 		}
-
-		// Apply the force to the body
-		rectBody.applyForceToCenter(force, true);
-
+		
 		// Set the position of the polygon and angle
-		rectBody.setTransform(rectBody.getPosition(), (float) Math.atan2(force.y, force.x));
+		rectBody.applyForceToCenter(planets.get(index).getGravity(rectBody.getPosition(), 1), true);
+		rectBody.setTransform(rectBody.getPosition(), (float) Math.atan2(rectBody.getPosition().y - planets.get(index).getPosition().y, 
+				rectBody.getPosition().x - planets.get(index).getPosition().x));
 		rectangle.setPosition(rectBody.getPosition().x, rectBody.getPosition().y);
 		rectangle.setRotation((float) Math.toDegrees(rectBody.getAngle()));
 	}

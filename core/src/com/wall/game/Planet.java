@@ -10,15 +10,25 @@ public class Planet {
 
 	private int radius;
 	private Vector2 position;
+	
+	private ArrayList<Vector2> jumpPads;
 
 	public Vector2 getGravity(float x, float y, float mass) {
 		// Get the distance between the planet and object
 		float gravity = (float) (GRAVITY_CONSTANT * mass * (Math.pow(radius, 2) * PLANET_DENSITY)
-				/ Math.pow(Math.sqrt(Math.pow(position.x - x, 2) + Math.pow(position.y - y, 2)), 2));
+				/ getDistance(x, y, position.x, position.y));
 
 		double direction = Math.atan2(position.y - y, position.x - x);
 
 		return new Vector2((float) (gravity * Math.cos(direction)), (float) (gravity * Math.sin(direction)));
+	}
+	
+	public static float getDistance(Vector2 pos1, Vector2 pos2) {
+		return getDistance(pos1.x, pos1.y, pos2.x, pos2.y);
+	}
+	
+	public static float getDistance(float x1, float y1, float x2, float y2) {
+		return (float) (Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
 	}
 	
 	public Vector2 getGravity(Vector2 position, float mass) {
@@ -28,7 +38,7 @@ public class Planet {
 	// Returns whether the two circles intersect
 	public static boolean isIntersecting(float x, float y, float r, ArrayList<Planet> planets) {
 		for (Planet p : planets) {
-			if (Math.pow(x - p.getX(), 2) + Math.pow(y - p.getY(), 2) <= Math.pow(r + p.getRadius(), 2) + 16)
+			if (getDistance(x, y, p.getX(), p.getY()) <= Math.pow(r + p.getRadius(), 2) + 16)
 				return true;
 		}
 
@@ -63,5 +73,13 @@ public class Planet {
 
 	public float getY() {
 		return position.y;
+	}
+	
+	public void createJumpPad(Vector2 pos) {
+		jumpPads.add(pos);
+	}
+	
+	public ArrayList<Vector2> getJumpPads() {
+		return jumpPads;
 	}
 }
